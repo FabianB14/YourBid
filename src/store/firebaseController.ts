@@ -213,6 +213,9 @@ export class FirebaseController implements GameController {
     this.presenceSub = onValue(child(this.roomRef, 'presence'), (snap) => {
       const presence = (snap.val() as Record<string, unknown>) || {};
       for (const id of this.state.playerOrder) {
+        // Never reconcile our own presence: the host is obviously connected,
+        // and a race with our own presence write must not demote us.
+        if (id === this.localPlayerId) continue;
         const online = Boolean(presence[id]);
         const p = this.state.players[id];
         if (p && p.connected !== online) {

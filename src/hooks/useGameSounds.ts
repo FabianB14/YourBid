@@ -13,7 +13,7 @@ interface Snapshot {
 
 function totalWon(state: GameState): number {
   return state.playerOrder.reduce(
-    (n, id) => n + state.players[id].wonItems.length,
+    (n, id) => n + (state.players[id]?.wonItems?.length ?? 0),
     0
   );
 }

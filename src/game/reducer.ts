@@ -163,10 +163,24 @@ export function reduce(state: GameState, action: Action, now: number): GameState
   switch (action.type) {
     case 'ADD_PLAYER': {
       if (state.players[action.player.id]) return state;
+      // Coerce fields that Firebase may strip when relaying the join action
+      // (empty arrays/objects become null/undefined). Without this, a joined
+      // player can arrive with `wonItems === undefined`, which crashes
+      // consumers that read `wonItems.length`.
+      const player: Player = {
+        ...action.player,
+        connected: action.player.connected !== false,
+        isBot: Boolean(action.player.isBot),
+        isHost: Boolean(action.player.isHost),
+        currency: action.player.currency ?? state.settings.startingCurrency,
+        wonItems: Array.isArray(action.player.wonItems)
+          ? action.player.wonItems
+          : [],
+      };
       return bump({
         ...state,
-        players: { ...state.players, [action.player.id]: action.player },
-        playerOrder: [...state.playerOrder, action.player.id],
+        players: { ...state.players, [player.id]: player },
+        playerOrder: [...state.playerOrder, player.id],
       });
     }
 
