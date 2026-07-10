@@ -215,7 +215,7 @@ export function Lobby({
 
       {/* Host chooses how items are generated (key stays in their browser). */}
       {isHost && <AiKeyPanel />}
-      {isHost && <ImageKeyPanel />}
+      {isHost && <ImageKeyPanel controller={controller} state={state} />}
 
       {isHost ? (
         <button

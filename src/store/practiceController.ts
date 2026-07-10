@@ -103,7 +103,9 @@ export class PracticeController implements GameController {
     const target = this.itemTarget();
     try {
       const result = await generateItems(this.state.topic, Math.ceil(target * 1.5));
-      if (result.found < target) {
+      // The offline sample pack is a fallback; play with whatever it has rather
+      // than hard-failing. Only real generators gate on the target count.
+      if (result.source !== 'offline' && result.found < target) {
         this.apply({
           type: 'SET_GENERATION',
           generation: {

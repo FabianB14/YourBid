@@ -305,7 +305,9 @@ export class FirebaseController implements GameController {
     const target = computeTotalItems(playerOrder.length, settings);
     try {
       const result = await generateItems(topic, Math.ceil(target * 1.5));
-      if (result.found < target) {
+      // The offline sample pack is a fallback; play with whatever it has rather
+      // than hard-failing. Only real generators gate on the target count.
+      if (result.source !== 'offline' && result.found < target) {
         this.applyAsHost({
           type: 'SET_GENERATION',
           generation: {
