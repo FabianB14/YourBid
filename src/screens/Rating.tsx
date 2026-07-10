@@ -2,6 +2,7 @@ import { useMemo } from 'react';
 import type { GameController } from '../store/controller';
 import type { GameState, WonItem } from '../types';
 import { RATING_MAX, RATING_MIN } from '../config/gameConfig';
+import { ItemImage } from '../components/ItemImage';
 
 export function Rating({
   controller,
@@ -69,6 +70,7 @@ export function Rating({
       </div>
 
       <div className="item-card" key={current.key}>
+        <ItemImage item={current.item} />
         <span className="tag" style={{ marginBottom: 10 }}>
           {current.item.category}
         </span>

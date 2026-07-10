@@ -6,6 +6,7 @@ import { canBid } from '../game/logic';
 import { MIN_OPENING_BID } from '../config/gameConfig';
 import { TimerBar } from '../components/TimerBar';
 import { PlayerSidebar } from '../components/PlayerSidebar';
+import { ItemImage } from '../components/ItemImage';
 import { Avatar, Bids } from '../components/ui';
 import { clamp } from '../utils/misc';
 
@@ -68,6 +69,7 @@ export function Auction({
         <div className="stack" style={{ gap: 16 }}>
           {/* Item card */}
           <div className="item-card" key={state.currentItemIndex}>
+            <ItemImage item={item} />
             <span className="tag" style={{ marginBottom: 10 }}>
               {item.category}
             </span>

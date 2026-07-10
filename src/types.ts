@@ -10,6 +10,9 @@ export interface Item {
   name: string;
   description: string;
   category: string;
+  /** Best-effort real image (movie poster, album/song art, product photo).
+   *  Resolved at generation time from free, keyless sources; may be absent. */
+  imageUrl?: string;
 }
 
 /** An item after it has been won, including who paid what and its ratings. */
