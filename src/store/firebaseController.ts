@@ -35,6 +35,7 @@ import {
   type Action,
 } from '../game/reducer';
 import { generateItems } from '../services/itemGeneration';
+import { computeTotalItems } from '../game/logic';
 import { getDb } from '../firebase';
 import { makeRoomCode, makeId } from '../utils/misc';
 import { DEFAULT_SETTINGS, MAX_PLAYERS } from '../config/gameConfig';
@@ -301,8 +302,7 @@ export class FirebaseController implements GameController {
       generation: { status: 'loading' },
     });
     const { playerOrder, settings, topic } = this.state;
-    const capacity = playerOrder.length * settings.slotsPerPlayer;
-    const target = Math.max(settings.baseItemCount, Math.ceil(capacity * 0.6));
+    const target = computeTotalItems(playerOrder.length, settings);
     try {
       const result = await generateItems(topic, Math.ceil(target * 1.5));
       if (result.found < target) {

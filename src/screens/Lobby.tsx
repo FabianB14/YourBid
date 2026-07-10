@@ -205,8 +205,10 @@ export function Lobby({
         </div>
         <span className="faint tiny">
           {capacity} total slots across {state.playerOrder.length}{' '}
-          {state.playerOrder.length === 1 ? 'player' : 'players'} — fewer items
-          than slots, so not everyone fills up. Scarcity is the game.
+          {state.playerOrder.length === 1 ? 'player' : 'players'}.{' '}
+          {totalItems > capacity
+            ? `${totalItems - capacity} more items than slots — room to pass and still fill your roster.`
+            : 'Just enough to fill every roster if you win them all.'}
         </span>
       </div>
 

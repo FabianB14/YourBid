@@ -97,7 +97,7 @@ export async function generateItems({ topic, count, apiKey, model }) {
 
   const message = await client.messages.create({
     model: model || DEFAULT_MODEL,
-    max_tokens: 2048,
+    max_tokens: 4096,
     system: buildSystemPrompt(),
     messages: [{ role: 'user', content: buildUserPrompt(topic, requested) }],
   });
