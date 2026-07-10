@@ -4,6 +4,7 @@ import type { GameState } from '../types';
 import { useGame } from '../store/GameContext';
 import { Avatar, Bids } from '../components/ui';
 import { AiKeyPanel } from '../components/AiKeyPanel';
+import { SoundToggle } from '../components/GameControls';
 import { computeTotalItems } from '../game/logic';
 import {
   BASE_ITEM_RANGE,
@@ -113,9 +114,12 @@ export function Lobby({
             <h2>Practice Room</h2>
           )}
         </div>
-        <button className="btn btn-danger btn-sm" onClick={leave}>
-          Leave
-        </button>
+        <div className="row" style={{ gap: 8 }}>
+          <SoundToggle />
+          <button className="btn btn-danger btn-sm" onClick={leave}>
+            Leave
+          </button>
+        </div>
       </div>
 
       {state.mode === 'multiplayer' && (
@@ -164,7 +168,7 @@ export function Lobby({
       </div>
 
       {/* Settings */}
-      <div className="grid-2" style={{ gridTemplateColumns: '1fr 1fr' }}>
+      <div className="settings-grid">
         <Stepper
           label="Starting Bids"
           value={state.settings.startingCurrency}

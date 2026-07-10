@@ -4,6 +4,8 @@ import type { GameState } from '../types';
 import { computeResults } from '../game/logic';
 import { useGame } from '../store/GameContext';
 import { Avatar, Bids } from '../components/ui';
+import { ItemImage } from '../components/ItemImage';
+import { SoundToggle } from '../components/GameControls';
 
 const MEDALS = ['🥇', '🥈', '🥉'];
 
@@ -22,6 +24,9 @@ export function Results({
 
   return (
     <div className="screen" style={{ gap: 16 }}>
+      <div className="row" style={{ justifyContent: 'flex-end' }}>
+        <SoundToggle />
+      </div>
       <div className="stack center" style={{ gap: 4 }}>
         <div className="brand" style={{ fontSize: 44 }}>Results</div>
         <div className="brand-sub">“{state.topic}”</div>
@@ -62,8 +67,9 @@ export function Results({
                     <span className="faint tiny">Won no items.</span>
                   )}
                   {r.items.map((it, idx) => (
-                    <div key={idx} className="row spread">
-                      <div className="stack" style={{ gap: 0, minWidth: 0 }}>
+                    <div key={idx} className="row spread" style={{ gap: 10 }}>
+                      <ItemImage item={it.item} size="sm" />
+                      <div className="stack" style={{ gap: 0, minWidth: 0, flex: 1 }}>
                         <span style={{ fontWeight: 700, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                           {it.item.name}
                         </span>

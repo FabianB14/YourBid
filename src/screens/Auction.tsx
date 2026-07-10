@@ -6,6 +6,8 @@ import { canBid } from '../game/logic';
 import { MIN_OPENING_BID } from '../config/gameConfig';
 import { TimerBar } from '../components/TimerBar';
 import { PlayerSidebar } from '../components/PlayerSidebar';
+import { ItemImage } from '../components/ItemImage';
+import { GameControls } from '../components/GameControls';
 import { Avatar, Bids } from '../components/ui';
 import { clamp } from '../utils/misc';
 
@@ -56,18 +58,22 @@ export function Auction({
 
   return (
     <div className="screen" style={{ gap: 16 }}>
-      <div className="row spread">
-        <span className="brand-sub">
+      <GameControls controller={controller} state={state} />
+      <div className="row spread" style={{ gap: 8 }}>
+        <span className="brand-sub" style={{ flex: '0 0 auto' }}>
           Item {Math.min(state.currentItemIndex + 1, state.totalItems)} /{' '}
           {state.totalItems}
         </span>
-        <span className="tag">Topic: {state.topic}</span>
+        <span className="tag truncate" title={state.topic}>
+          {state.topic}
+        </span>
       </div>
 
       <div className="auction-layout">
         <div className="stack" style={{ gap: 16 }}>
           {/* Item card */}
           <div className="item-card" key={state.currentItemIndex}>
+            <ItemImage item={item} />
             <span className="tag" style={{ marginBottom: 10 }}>
               {item.category}
             </span>
