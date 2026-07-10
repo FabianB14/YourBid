@@ -87,3 +87,18 @@ export async function resolveItemImage(item: Item): Promise<string | null> {
   }
   return null;
 }
+
+/**
+ * Resolve images for many items in parallel (best-effort). Returns new item
+ * objects with `imageUrl` set where found. Run once by the host at generation
+ * time so every player sees the same artwork from synced state (rather than
+ * each client fetching independently, which can miss).
+ */
+export async function enrichItemsWithImages(items: Item[]): Promise<Item[]> {
+  const results = await Promise.allSettled(items.map((it) => resolveItemImage(it)));
+  return items.map((it, i) => {
+    const r = results[i];
+    const url = r.status === 'fulfilled' ? r.value : null;
+    return url ? { ...it, imageUrl: url } : it;
+  });
+}

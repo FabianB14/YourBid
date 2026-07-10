@@ -95,6 +95,10 @@ export class FirebaseController implements GameController {
   private presenceSub: Unsubscribe | null = null;
   private ticker: ReturnType<typeof setInterval> | null = null;
   private isHost = false;
+  /** Player ids the host has actually seen present at least once. Used to avoid
+   *  marking a freshly-joined player "disconnected" before their presence write
+   *  has propagated. */
+  private seenPresent = new Set<string>();
 
   private constructor(
     db: Database,
@@ -217,9 +221,16 @@ export class FirebaseController implements GameController {
         // and a race with our own presence write must not demote us.
         if (id === this.localPlayerId) continue;
         const online = Boolean(presence[id]);
+        if (online) this.seenPresent.add(id);
         const p = this.state.players[id];
-        if (p && p.connected !== online) {
-          this.applyAsHost({ type: 'SET_CONNECTED', playerId: id, connected: online });
+        if (!p) continue;
+        if (online && !p.connected) {
+          this.applyAsHost({ type: 'SET_CONNECTED', playerId: id, connected: true });
+        } else if (!online && p.connected && this.seenPresent.has(id)) {
+          // Only mark offline once we've actually seen them online before — a
+          // brand-new joiner whose presence hasn't propagated yet stays
+          // connected (its default) instead of being wrongly skipped.
+          this.applyAsHost({ type: 'SET_CONNECTED', playerId: id, connected: false });
         }
       }
     });

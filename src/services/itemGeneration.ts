@@ -20,6 +20,7 @@ import {
 } from './aiConfig';
 import { generateWithGemini } from './generators/gemini';
 import { generateWithAnthropic } from './generators/anthropic';
+import { enrichItemsWithImages } from './images';
 
 export interface GenerationResult {
   items: Item[];
@@ -35,6 +36,20 @@ function withIds(items: Array<Omit<Item, 'id'>>): Item[] {
   return dedupeItems(items.map((it) => ({ ...it, id: makeId('item') })));
 }
 
+/**
+ * Resolve raw items into a result: assign ids, then attach images once (so in
+ * multiplayer the host stores the artwork in shared state and every player sees
+ * the same images without each client fetching independently).
+ */
+async function pack(
+  raw: Array<Omit<Item, 'id'>>,
+  count: number,
+  source: GenerationResult['source']
+): Promise<GenerationResult> {
+  const items = await enrichItemsWithImages(withIds(raw));
+  return { items, requested: count, found: items.length, source };
+}
+
 export async function generateItems(
   topic: string,
   count: number,
@@ -47,13 +62,7 @@ export async function generateItems(
       config.provider === 'gemini'
         ? await generateWithGemini(topic, count, config.apiKey, model)
         : await generateWithAnthropic(topic, count, config.apiKey, model);
-    const items = withIds(raw);
-    return {
-      items,
-      requested: count,
-      found: items.length,
-      source: config.provider === 'gemini' ? 'gemini' : 'anthropic',
-    };
+    return pack(raw, count, config.provider === 'gemini' ? 'gemini' : 'anthropic');
   }
 
   // 2. Serverless function (keeps the key server-side, e.g. on Vercel).
@@ -68,15 +77,13 @@ export async function generateItems(
       throw new Error(body.error || `Request failed (${res.status})`);
     }
     const data = (await res.json()) as { items: Array<Omit<Item, 'id'>> };
-    const items = withIds(data.items);
-    return { items, requested: count, found: items.length, source: 'server' };
+    return pack(data.items, count, 'server');
   } catch (err) {
     // 3. Offline fallback pack.
     console.warn(
       '[YourBid] No provider key set and /api unavailable — using offline sample pack.',
       err
     );
-    const items = withIds(sampleItemsForTopic(topic));
-    return { items, requested: count, found: items.length, source: 'offline' };
+    return pack(sampleItemsForTopic(topic), count, 'offline');
   }
 }
