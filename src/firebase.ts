@@ -30,13 +30,14 @@ import { initializeApp, type FirebaseApp } from 'firebase/app';
 import { getDatabase, type Database } from 'firebase/database';
 
 export const firebaseConfig = {
-  apiKey: 'REPLACE_ME_apiKey',
-  authDomain: 'REPLACE_ME.firebaseapp.com',
-  databaseURL: 'https://REPLACE_ME-default-rtdb.firebaseio.com',
-  projectId: 'REPLACE_ME',
-  storageBucket: 'REPLACE_ME.appspot.com',
-  messagingSenderId: 'REPLACE_ME',
-  appId: 'REPLACE_ME',
+  apiKey: 'AIzaSyAP-BobKZIPzd5yJdmDq3q9hLpD7_5Mod0',
+  authDomain: 'yourbid-fa6fa.firebaseapp.com',
+  databaseURL: 'https://yourbid-fa6fa-default-rtdb.firebaseio.com',
+  projectId: 'yourbid-fa6fa',
+  storageBucket: 'yourbid-fa6fa.firebasestorage.app',
+  messagingSenderId: '104562530069',
+  appId: '1:104562530069:web:d0d692da551f3217e0fb1c',
+  measurementId: 'G-GMS567G2S5',
 };
 
 /** True once the placeholders above have been replaced with real values. */
