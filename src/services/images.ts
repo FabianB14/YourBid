@@ -64,19 +64,40 @@ async function fromWikipedia(query: string): Promise<string | null> {
   return null;
 }
 
-/** Resolve one item's image, trying the most likely source first. */
+/**
+ * Openverse image search — keyless, CORS-enabled, ~700M openly-licensed images
+ * (incl. Flickr/Wikimedia). Broad coverage for real-world products (sneakers,
+ * foods, gadgets) that don't have a Wikipedia page.
+ */
+async function fromOpenverse(query: string): Promise<string | null> {
+  const url =
+    'https://api.openverse.org/v1/images/' +
+    `?q=${encodeURIComponent(query)}&page_size=1&mature=false`;
+  const data = await fetchJson(url, { headers: { Accept: 'application/json' } });
+  const first = data?.results?.[0];
+  return first?.thumbnail || first?.url || null;
+}
+
+/** Resolve one item's image, trying the most likely sources in order. */
 export async function resolveItemImage(item: Item): Promise<string | null> {
   const kind = classify(item);
+  const name = item.name;
   const tries: Array<() => Promise<string | null>> = [];
   if (kind === 'music') {
-    tries.push(() => fromItunes(item.name, 'music'));
-    tries.push(() => fromWikipedia(`${item.name} song`));
+    tries.push(() => fromItunes(name, 'music'));
+    tries.push(() => fromWikipedia(`${name} song`));
   } else if (kind === 'movie') {
-    tries.push(() => fromItunes(item.name, 'movie'));
-    tries.push(() => fromWikipedia(`${item.name} film`));
+    tries.push(() => fromItunes(name, 'movie'));
+    tries.push(() => fromWikipedia(`${name} film`));
   } else {
-    tries.push(() => fromWikipedia(item.name));
+    tries.push(() => fromWikipedia(name));
   }
+  // Openverse is the broad catch-all so places, houses, foods, products, etc.
+  // still get a real photo when the specific sources miss. Try the exact name
+  // first, then add category context as a looser fallback.
+  tries.push(() => fromOpenverse(name));
+  tries.push(() => fromOpenverse(`${name} ${item.category}`.trim()));
+
   for (const attempt of tries) {
     try {
       const url = await attempt();
@@ -94,11 +115,19 @@ export async function resolveItemImage(item: Item): Promise<string | null> {
  * time so every player sees the same artwork from synced state (rather than
  * each client fetching independently, which can miss).
  */
-export async function enrichItemsWithImages(items: Item[]): Promise<Item[]> {
-  const results = await Promise.allSettled(items.map((it) => resolveItemImage(it)));
-  return items.map((it, i) => {
-    const r = results[i];
-    const url = r.status === 'fulfilled' ? r.value : null;
-    return url ? { ...it, imageUrl: url } : it;
-  });
+export async function enrichItemsWithImages(
+  items: Item[],
+  perItemBudgetMs = 7000
+): Promise<Item[]> {
+  const urls = await Promise.all(
+    items.map((it) =>
+      Promise.race<string | null>([
+        resolveItemImage(it).catch(() => null),
+        new Promise<null>((r) => setTimeout(() => r(null), perItemBudgetMs)),
+      ])
+    )
+  );
+  // Items still without a URL are left for the per-client lazy lookup during
+  // play (useItemImage), so a couple of slow lookups never hold up game start.
+  return items.map((it, i) => (urls[i] ? { ...it, imageUrl: urls[i] } : it));
 }
