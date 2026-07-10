@@ -7,6 +7,7 @@ import { MIN_OPENING_BID } from '../config/gameConfig';
 import { TimerBar } from '../components/TimerBar';
 import { PlayerSidebar } from '../components/PlayerSidebar';
 import { ItemImage } from '../components/ItemImage';
+import { ItemImageSearch } from '../components/ItemImageSearch';
 import { GameControls } from '../components/GameControls';
 import { Avatar, Bids } from '../components/ui';
 import { clamp } from '../utils/misc';
@@ -79,6 +80,9 @@ export function Auction({
             </span>
             <div className="item-name">{item.name}</div>
             <div className="item-desc">{item.description}</div>
+            <div style={{ marginTop: 12 }}>
+              <ItemImageSearch item={item} cx={state.settings.imageSearchCx} />
+            </div>
           </div>
 
           {/* Bid status */}

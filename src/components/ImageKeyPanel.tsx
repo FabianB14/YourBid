@@ -1,21 +1,38 @@
 import { useState } from 'react';
+import type { GameController } from '../store/controller';
+import type { GameState } from '../types';
 import { loadImageConfig, saveImageConfig } from '../services/imageConfig';
 
 /**
- * Host-only panel to paste an optional Pexels key for reliable item images.
- * Stored only in this browser; sent directly to Pexels. Without it, the app
- * still uses free keyless image sources (Wikipedia + Openverse).
+ * Host-only panel for item images:
+ *  - Pexels key (optional): stored ONLY in this browser, used for the clean
+ *    auto-image on each card.
+ *  - Google Search Engine ID (cx, optional): public by design, so it's saved to
+ *    the synced game settings and powers the "See real images" widget for every
+ *    player.
  */
-export function ImageKeyPanel() {
-  const [key, setKey] = useState(() => loadImageConfig().pexelsKey);
+export function ImageKeyPanel({
+  controller,
+  state,
+}: {
+  controller: GameController;
+  state: GameState;
+}) {
+  const [pexels, setPexels] = useState(() => loadImageConfig().pexelsKey);
+  const [cx, setCx] = useState(state.settings.imageSearchCx);
   const [reveal, setReveal] = useState(false);
 
-  const update = (value: string) => {
-    setKey(value);
+  const updatePexels = (value: string) => {
+    setPexels(value);
     saveImageConfig({ pexelsKey: value });
   };
+  const updateCx = (value: string) => {
+    setCx(value);
+    controller.updateSettings({ imageSearchCx: value.trim() });
+  };
 
-  const set = key.trim().length > 0;
+  const pexelsSet = pexels.trim().length > 0;
+  const cxSet = cx.trim().length > 0;
 
   return (
     <div className="card stack" style={{ gap: 12 }}>
@@ -23,9 +40,9 @@ export function ImageKeyPanel() {
         <span className="brand-sub">Item images</span>
         <span
           className="tag"
-          style={{ color: set ? 'var(--accent-3)' : 'var(--text-dim)' }}
+          style={{ color: pexelsSet ? 'var(--accent-3)' : 'var(--text-dim)' }}
         >
-          {set ? 'Pexels on' : 'Free sources'}
+          {pexelsSet ? 'Pexels on' : 'Free sources'}
         </span>
       </div>
 
@@ -35,11 +52,11 @@ export function ImageKeyPanel() {
           <input
             className="input"
             type={reveal ? 'text' : 'password'}
-            value={key}
+            value={pexels}
             placeholder="Paste your Pexels key…"
             autoComplete="off"
             spellCheck={false}
-            onChange={(e) => update(e.target.value)}
+            onChange={(e) => updatePexels(e.target.value)}
           />
           <button
             className="btn btn-ghost btn-sm"
@@ -50,16 +67,33 @@ export function ImageKeyPanel() {
           </button>
         </div>
         <span className="faint tiny">
-          Free key in ~1 min at pexels.com/api — gives real photos for almost any
-          item (places, houses, foods, products). Optional: without it, images
-          still come from free Wikipedia + Openverse sources.
+          Free key in ~1 min at pexels.com/api — a real photo for almost any
+          item. Without it, images use free Wikipedia + Openverse.
         </span>
       </div>
 
-      {set && (
+      <div className="field">
+        <label>Google image search ID (optional)</label>
+        <input
+          className="input"
+          value={cx}
+          placeholder="Search engine ID (cx)…"
+          autoComplete="off"
+          spellCheck={false}
+          onChange={(e) => updateCx(e.target.value)}
+        />
+        <span className="faint tiny">
+          Adds a “🔍 See real images” button on each item — live Google Images for
+          the exact thing. Create a free engine at
+          programmablesearchengine.google.com (turn on Image search) and paste
+          its ID here. Shared with all players. {cxSet ? '✓ on' : ''}
+        </span>
+      </div>
+
+      {(pexelsSet || cxSet) && (
         <div className="info-banner tiny">
-          🔒 Stored in this browser only and sent straight to Pexels — never
-          saved to the game or shared with players.
+          🔒 The Pexels key stays in your browser. The Google ID is public by
+          design and shared with players so the button works for everyone.
         </div>
       )}
     </div>
