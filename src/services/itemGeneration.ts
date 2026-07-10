@@ -1,33 +1,62 @@
-// Client-side item generation.
+// Client-side item generation orchestrator.
 //
-// Calls the server endpoint (which holds the Anthropic key). If the endpoint is
-// unreachable or not configured, falls back to a bundled real-item pack so the
-// full game loop stays testable before any backend is wired up (practice mode).
+// Priority:
+//   1. Host-entered key (Gemini or Claude) — called directly from the browser.
+//      This is the zero-backend path that works on static hosts (GitHub Pages).
+//   2. Same-origin / external serverless function at /api/generate-items
+//      (for Vercel-style deploys that keep the key server-side).
+//   3. Offline bundled real-item pack, so the full loop stays testable with no
+//      key and no backend at all.
 
 import type { Item } from '../types';
 import { makeId } from '../utils/misc';
 import { dedupeItems } from '../game/logic';
 import { sampleItemsForTopic } from './sampleItems';
+import {
+  loadAiConfig,
+  effectiveModel,
+  isAiReady,
+  type AiConfig,
+} from './aiConfig';
+import { generateWithGemini } from './generators/gemini';
+import { generateWithAnthropic } from './generators/anthropic';
 
 export interface GenerationResult {
   items: Item[];
   requested: number;
   found: number;
-  usedFallback: boolean;
+  /** How the items were produced. */
+  source: 'gemini' | 'anthropic' | 'server' | 'offline';
 }
 
-// On a static host (e.g. GitHub Pages) there's no same-origin serverless
-// function, so point at an externally-deployed one via VITE_API_BASE_URL
-// (e.g. "https://your-app.vercel.app"). Left empty, calls go to the same origin
-// (works with `vercel dev` / the local dev API), and if that 404s the offline
-// real-item pack is used instead.
 const API_BASE = (import.meta.env.VITE_API_BASE_URL ?? '').replace(/\/$/, '');
+
+function withIds(items: Array<Omit<Item, 'id'>>): Item[] {
+  return dedupeItems(items.map((it) => ({ ...it, id: makeId('item') })));
+}
 
 export async function generateItems(
   topic: string,
-  count: number
+  count: number,
+  config: AiConfig = loadAiConfig()
 ): Promise<GenerationResult> {
-  const requested = count;
+  // 1. Direct provider call using the host's own key.
+  if (isAiReady(config)) {
+    const model = effectiveModel(config);
+    const raw =
+      config.provider === 'gemini'
+        ? await generateWithGemini(topic, count, config.apiKey, model)
+        : await generateWithAnthropic(topic, count, config.apiKey, model);
+    const items = withIds(raw);
+    return {
+      items,
+      requested: count,
+      found: items.length,
+      source: config.provider === 'gemini' ? 'gemini' : 'anthropic',
+    };
+  }
+
+  // 2. Serverless function (keeps the key server-side, e.g. on Vercel).
   try {
     const res = await fetch(`${API_BASE}/api/generate-items`, {
       method: 'POST',
@@ -38,26 +67,16 @@ export async function generateItems(
       const body = await res.json().catch(() => ({}));
       throw new Error(body.error || `Request failed (${res.status})`);
     }
-    const data = (await res.json()) as {
-      items: Array<Omit<Item, 'id'>>;
-      requested?: number;
-    };
-    const items = dedupeItems(
-      data.items.map((it) => ({ ...it, id: makeId('item') }))
-    );
-    return {
-      items,
-      requested: data.requested ?? requested,
-      found: items.length,
-      usedFallback: false,
-    };
+    const data = (await res.json()) as { items: Array<Omit<Item, 'id'>> };
+    const items = withIds(data.items);
+    return { items, requested: count, found: items.length, source: 'server' };
   } catch (err) {
-    // Fallback: bundled real items so the loop is testable offline.
+    // 3. Offline fallback pack.
     console.warn(
-      '[YourBid] /api/generate-items unavailable, using offline sample pack.',
+      '[YourBid] No provider key set and /api unavailable — using offline sample pack.',
       err
     );
-    const items = dedupeItems(sampleItemsForTopic(topic));
-    return { items, requested, found: items.length, usedFallback: true };
+    const items = withIds(sampleItemsForTopic(topic));
+    return { items, requested: count, found: items.length, source: 'offline' };
   }
 }

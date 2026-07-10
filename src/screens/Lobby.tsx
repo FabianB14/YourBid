@@ -3,6 +3,7 @@ import type { GameController } from '../store/controller';
 import type { GameState } from '../types';
 import { useGame } from '../store/GameContext';
 import { Avatar, Bids } from '../components/ui';
+import { AiKeyPanel } from '../components/AiKeyPanel';
 import { computeTotalItems } from '../game/logic';
 import {
   BASE_ITEM_RANGE,
@@ -204,6 +205,9 @@ export function Lobby({
           than slots, so not everyone fills up. Scarcity is the game.
         </span>
       </div>
+
+      {/* Host chooses how items are generated (key stays in their browser). */}
+      {isHost && <AiKeyPanel />}
 
       {isHost ? (
         <button
