@@ -5,6 +5,7 @@ import { computeResults } from '../game/logic';
 import { useGame } from '../store/GameContext';
 import { Avatar, Bids } from '../components/ui';
 import { ItemImage } from '../components/ItemImage';
+import { SoundToggle } from '../components/GameControls';
 
 const MEDALS = ['🥇', '🥈', '🥉'];
 
@@ -23,6 +24,9 @@ export function Results({
 
   return (
     <div className="screen" style={{ gap: 16 }}>
+      <div className="row" style={{ justifyContent: 'flex-end' }}>
+        <SoundToggle />
+      </div>
       <div className="stack center" style={{ gap: 4 }}>
         <div className="brand" style={{ fontSize: 44 }}>Results</div>
         <div className="brand-sub">“{state.topic}”</div>

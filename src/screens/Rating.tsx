@@ -3,6 +3,7 @@ import type { GameController } from '../store/controller';
 import type { GameState, WonItem } from '../types';
 import { RATING_MAX, RATING_MIN } from '../config/gameConfig';
 import { ItemImage } from '../components/ItemImage';
+import { GameControls } from '../components/GameControls';
 
 export function Rating({
   controller,
@@ -60,6 +61,7 @@ export function Rating({
 
   return (
     <div className="screen" style={{ gap: 18 }}>
+      <GameControls controller={controller} state={state} />
       <div className="stack" style={{ gap: 6 }}>
         <div className="brand-sub">
           Rate the items · {done + 1} / {total}

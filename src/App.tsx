@@ -1,5 +1,6 @@
 import { GameProvider, useGame, useGameState } from './store/GameContext';
 import type { GameController } from './store/controller';
+import { useGameSounds } from './hooks/useGameSounds';
 import { Home } from './screens/Home';
 import { Lobby } from './screens/Lobby';
 import { Generating } from './screens/Generating';
@@ -9,6 +10,7 @@ import { Results } from './screens/Results';
 
 function Router({ controller }: { controller: GameController }) {
   const state = useGameState(controller);
+  useGameSounds(state, controller.localPlayerId);
 
   // While still in the lobby, a loading/error generation status means the host
   // has pressed Start — show the Generating screen.

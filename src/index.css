@@ -55,6 +55,8 @@ body {
 #root {
   display: flex;
   flex-direction: column;
+  overflow-x: hidden; /* never allow accidental horizontal scroll on phones */
+  width: 100%;
 }
 
 h1, h2, h3 {
@@ -212,6 +214,15 @@ input, select {
   font-size: 12px;
   font-weight: 700;
   color: var(--text-dim);
+  max-width: 100%;
+  min-width: 0;
+}
+.tag.truncate {
+  max-width: 55vw;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  display: inline-block;
 }
 .pill-currency {
   color: var(--gold);
@@ -469,3 +480,10 @@ input, select {
 }
 
 .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+
+/* Settings steppers: single column on narrow phones, two columns once there's
+   room (avoids the chunky steppers overflowing / being clipped). */
+.settings-grid { display: grid; grid-template-columns: 1fr; gap: 10px; }
+@media (min-width: 520px) {
+  .settings-grid { grid-template-columns: 1fr 1fr; }
+}
