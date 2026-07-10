@@ -10,6 +10,7 @@
 // item without an image and the UI shows its styled placeholder card.
 
 import type { Item } from '../types';
+import { loadImageConfig } from './imageConfig';
 
 const TIMEOUT_MS = 4000;
 
@@ -65,6 +66,19 @@ async function fromWikipedia(query: string): Promise<string | null> {
 }
 
 /**
+ * Pexels image search — keyed (free), CORS-enabled. Returns a real photo for
+ * almost any query, so it's the reliable catch-all when a key is provided.
+ */
+async function fromPexels(query: string, key: string): Promise<string | null> {
+  const url = `https://api.pexels.com/v1/search?query=${encodeURIComponent(
+    query
+  )}&per_page=1&orientation=landscape`;
+  const data = await fetchJson(url, { headers: { Authorization: key } });
+  const photo = data?.photos?.[0]?.src;
+  return photo?.large || photo?.medium || photo?.original || null;
+}
+
+/**
  * Openverse image search — keyless, CORS-enabled, ~700M openly-licensed images
  * (incl. Flickr/Wikimedia). Broad coverage for real-world products (sneakers,
  * foods, gadgets) that don't have a Wikipedia page.
@@ -79,10 +93,15 @@ async function fromOpenverse(query: string): Promise<string | null> {
 }
 
 /** Resolve one item's image, trying the most likely sources in order. */
-export async function resolveItemImage(item: Item): Promise<string | null> {
+export async function resolveItemImage(
+  item: Item,
+  pexelsKey = ''
+): Promise<string | null> {
   const kind = classify(item);
   const name = item.name;
   const tries: Array<() => Promise<string | null>> = [];
+
+  // Exact-match sources first (accurate cover/poster art & article images).
   if (kind === 'music') {
     tries.push(() => fromItunes(name, 'music'));
     tries.push(() => fromWikipedia(`${name} song`));
@@ -92,9 +111,15 @@ export async function resolveItemImage(item: Item): Promise<string | null> {
   } else {
     tries.push(() => fromWikipedia(name));
   }
-  // Openverse is the broad catch-all so places, houses, foods, products, etc.
-  // still get a real photo when the specific sources miss. Try the exact name
-  // first, then add category context as a looser fallback.
+
+  // Pexels (if a key is set) is the reliable catch-all — a real photo for
+  // almost anything (places, houses, foods, products…).
+  if (pexelsKey) {
+    tries.push(() => fromPexels(`${name} ${item.category}`.trim(), pexelsKey));
+    tries.push(() => fromPexels(name, pexelsKey));
+  }
+
+  // Keyless catch-alls, last.
   tries.push(() => fromOpenverse(name));
   tries.push(() => fromOpenverse(`${name} ${item.category}`.trim()));
 
@@ -119,10 +144,11 @@ export async function enrichItemsWithImages(
   items: Item[],
   perItemBudgetMs = 7000
 ): Promise<Item[]> {
+  const { pexelsKey } = loadImageConfig();
   const urls = await Promise.all(
     items.map((it) =>
       Promise.race<string | null>([
-        resolveItemImage(it).catch(() => null),
+        resolveItemImage(it, pexelsKey).catch(() => null),
         new Promise<null>((r) => setTimeout(() => r(null), perItemBudgetMs)),
       ])
     )

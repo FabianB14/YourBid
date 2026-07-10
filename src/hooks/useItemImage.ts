@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import type { Item } from '../types';
 import { resolveItemImage } from '../services/images';
+import { loadImageConfig } from '../services/imageConfig';
 
 // Module-level cache so an item's image is fetched at most once per session,
 // even across re-renders, repeated items, or revisiting screens.
@@ -35,7 +36,9 @@ export function useItemImage(item: Item): string | null | undefined {
     let active = true;
     let promise = inflight.get(key);
     if (!promise) {
-      promise = resolveItemImage(item).catch(() => null);
+      promise = resolveItemImage(item, loadImageConfig().pexelsKey).catch(
+        () => null
+      );
       inflight.set(key, promise);
     }
     setUrl(undefined);
