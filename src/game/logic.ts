@@ -7,9 +7,12 @@ import { round1 } from '../utils/misc';
 /**
  * Total number of items to auction.
  *
- *   total = max(baseItemCount, ceil(players * slots * 0.6))
- * but always strictly LESS than players * slots so that scarcity exists and
- * not everyone can fill every slot.
+ *   total = max(baseItemCount, players * slots)
+ *
+ * i.e. at least enough items to fill every roster slot, and at least the base
+ * item count. When the base count exceeds total capacity (e.g. base 15 with
+ * 2 players × 6 slots = 12), the extra items become headroom — players can pass
+ * on some items and still fill their rosters.
  */
 export function computeTotalItems(
   playerCount: number,
@@ -17,9 +20,7 @@ export function computeTotalItems(
 ): number {
   const { slotsPerPlayer, baseItemCount } = settings;
   const capacity = playerCount * slotsPerPlayer;
-  const raw = Math.max(baseItemCount, Math.ceil(capacity * 0.6));
-  const cap = Math.max(1, capacity - 1); // strictly less than capacity
-  return Math.min(raw, cap);
+  return Math.max(baseItemCount, capacity);
 }
 
 /** Number of slots a player has filled = number of items they've won. */

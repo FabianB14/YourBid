@@ -12,6 +12,7 @@ import {
   botRating,
 } from '../game/bots';
 import { generateItems } from '../services/itemGeneration';
+import { computeTotalItems } from '../game/logic';
 import { makeRoomCode, makeId } from '../utils/misc';
 import { DEFAULT_SETTINGS } from '../config/gameConfig';
 
@@ -154,10 +155,7 @@ export class PracticeController implements GameController {
 
   // ---- internals ----
   private itemTarget(): number {
-    // Mirror computeTotalItems' base so we generate enough.
-    const { playerOrder, settings } = this.state;
-    const capacity = playerOrder.length * settings.slotsPerPlayer;
-    return Math.max(settings.baseItemCount, Math.ceil(capacity * 0.6));
+    return computeTotalItems(this.state.playerOrder.length, this.state.settings);
   }
 
   private tick(): void {
