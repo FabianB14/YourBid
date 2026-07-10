@@ -52,6 +52,31 @@ placeholders with your Firebase web-app config, then enable Realtime Database.
 Until you do, **Create/Join Room** are disabled and the app runs in local /
 practice mode only. Suggested database rules are documented in that same file.
 
+## Deploy to GitHub Pages
+
+A workflow at [`.github/workflows/deploy-pages.yml`](.github/workflows/deploy-pages.yml)
+builds and publishes the app on every push to `main`.
+
+1. Repo **Settings → Pages → Build and deployment → Source: GitHub Actions**.
+2. Push to `main`. The site publishes to `https://<owner>.github.io/<repo>/`
+   (the asset base path is set automatically from the repo name).
+
+**What works on Pages** (it's static hosting):
+
+- ✅ **Practice mode** — fully, offline, no setup.
+- ✅ **Multiplayer** — Firebase is a hosted service, so it works from static
+  hosting once you fill in `src/firebase.ts`.
+- ⚠️ **Real item generation** — the `/api` serverless function does **not** run
+  on Pages. Without it, the app uses the bundled offline real-item pack. To get
+  live Anthropic generation, deploy just the function elsewhere (Vercel,
+  Netlify, or Cloudflare) and set a repo **variable** `VITE_API_BASE_URL` to its
+  URL (Settings → Secrets and variables → Actions → Variables). The build wires
+  the frontend to call it; the API key stays server-side on that host.
+
+> Prefer an all-in-one host? Deploy to **Vercel** instead and everything —
+> static app *and* the `/api` function — runs together with just
+> `ANTHROPIC_API_KEY` set. See [`vercel.json`](vercel.json).
+
 ---
 
 ## How the game works

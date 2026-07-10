@@ -16,13 +16,20 @@ export interface GenerationResult {
   usedFallback: boolean;
 }
 
+// On a static host (e.g. GitHub Pages) there's no same-origin serverless
+// function, so point at an externally-deployed one via VITE_API_BASE_URL
+// (e.g. "https://your-app.vercel.app"). Left empty, calls go to the same origin
+// (works with `vercel dev` / the local dev API), and if that 404s the offline
+// real-item pack is used instead.
+const API_BASE = (import.meta.env.VITE_API_BASE_URL ?? '').replace(/\/$/, '');
+
 export async function generateItems(
   topic: string,
   count: number
 ): Promise<GenerationResult> {
   const requested = count;
   try {
-    const res = await fetch('/api/generate-items', {
+    const res = await fetch(`${API_BASE}/api/generate-items`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ topic, count }),
