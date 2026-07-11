@@ -80,7 +80,7 @@ export function Rating({
         <div className="item-name">{current.item.name}</div>
         <div className="item-desc">{current.item.description}</div>
         <div style={{ marginTop: 12 }}>
-          <ItemImageSearch item={current.item} cx={state.settings.imageSearchCx} />
+          <ItemImageSearch item={current.item} />
         </div>
         <div className="faint tiny" style={{ marginTop: 12 }}>
           Won by {current.ownerName} · How good is this item?

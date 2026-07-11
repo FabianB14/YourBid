@@ -1,38 +1,22 @@
 import { useState } from 'react';
-import type { GameController } from '../store/controller';
-import type { GameState } from '../types';
 import { loadImageConfig, saveImageConfig } from '../services/imageConfig';
 
 /**
- * Host-only panel for item images:
- *  - Pexels key (optional): stored ONLY in this browser, used for the clean
- *    auto-image on each card.
- *  - Google Search Engine ID (cx, optional): public by design, so it's saved to
- *    the synced game settings and powers the "See real images" widget for every
- *    player.
+ * Host-only panel for item images. Optional Pexels key (stored ONLY in this
+ * browser) powers the clean auto-image on each card. Without it, images use the
+ * free Wikipedia + Openverse sources. Every item also has a "See images" button
+ * that opens Google Images in a new tab — that needs no setup.
  */
-export function ImageKeyPanel({
-  controller,
-  state,
-}: {
-  controller: GameController;
-  state: GameState;
-}) {
+export function ImageKeyPanel() {
   const [pexels, setPexels] = useState(() => loadImageConfig().pexelsKey);
-  const [cx, setCx] = useState(state.settings.imageSearchCx);
   const [reveal, setReveal] = useState(false);
 
   const updatePexels = (value: string) => {
     setPexels(value);
     saveImageConfig({ pexelsKey: value });
   };
-  const updateCx = (value: string) => {
-    setCx(value);
-    controller.updateSettings({ imageSearchCx: value.trim() });
-  };
 
   const pexelsSet = pexels.trim().length > 0;
-  const cxSet = cx.trim().length > 0;
 
   return (
     <div className="card stack" style={{ gap: 12 }}>
@@ -72,28 +56,15 @@ export function ImageKeyPanel({
         </span>
       </div>
 
-      <div className="field">
-        <label>Google image search ID (optional)</label>
-        <input
-          className="input"
-          value={cx}
-          placeholder="Search engine ID (cx)…"
-          autoComplete="off"
-          spellCheck={false}
-          onChange={(e) => updateCx(e.target.value)}
-        />
-        <span className="faint tiny">
-          Adds a “🔍 See real images” button on each item — live Google Images for
-          the exact thing. Create a free engine at
-          programmablesearchengine.google.com (turn on Image search) and paste
-          its ID here. Shared with all players. {cxSet ? '✓ on' : ''}
-        </span>
-      </div>
+      <span className="faint tiny">
+        Every item also has a “🔍 See images” button that opens Google Images for
+        the exact item in a new tab — no setup needed.
+      </span>
 
-      {(pexelsSet || cxSet) && (
+      {pexelsSet && (
         <div className="info-banner tiny">
-          🔒 The Pexels key stays in your browser. The Google ID is public by
-          design and shared with players so the button works for everyone.
+          🔒 Your Pexels key stays in this browser only and is sent straight to
+          Pexels — never saved to the game or shared with players.
         </div>
       )}
     </div>
