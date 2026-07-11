@@ -134,6 +134,30 @@ export function anniversaryItems(): Array<Omit<Item, 'id'>> {
       category: 'Our Day',
     },
     {
+      name: '11:11 — Chris Brown Concert',
+      description:
+        'Dancing next to you at the 11:11 tour — I never wanted that night to end. I love you.',
+      category: 'Concert',
+    },
+    {
+      name: 'Game of Thrones',
+      description:
+        'Our show — every episode curled up together (and yelling at the TV). I love you.',
+      category: 'Show',
+    },
+    {
+      name: 'The Originals',
+      description:
+        'One more episode, every single time, side by side with you. I love you.',
+      category: 'Show',
+    },
+    {
+      name: 'Her Jeep',
+      description:
+        'Top down, music up, you smiling behind the wheel — one of my favorite views. I love you.',
+      category: 'Ride',
+    },
+    {
       name: LOVE_POEM_TITLE,
       description:
         'A poem for you — one line for every year we’ve had. Tap 💌 Read. I love you.',
