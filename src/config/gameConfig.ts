@@ -9,7 +9,6 @@ export const DEFAULT_SETTINGS: Settings = {
   startingCurrency: 20,
   slotsPerPlayer: 6,
   baseItemCount: 15,
-  imageSearchCx: '',
 };
 
 export const SLOTS_RANGE = { min: 3, max: 10 } as const;

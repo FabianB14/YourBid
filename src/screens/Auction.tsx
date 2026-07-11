@@ -81,7 +81,7 @@ export function Auction({
             <div className="item-name">{item.name}</div>
             <div className="item-desc">{item.description}</div>
             <div style={{ marginTop: 12 }}>
-              <ItemImageSearch item={item} cx={state.settings.imageSearchCx} />
+              <ItemImageSearch item={item} />
             </div>
           </div>
 

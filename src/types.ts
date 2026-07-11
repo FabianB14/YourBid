@@ -39,9 +39,6 @@ export interface Settings {
   startingCurrency: number;
   slotsPerPlayer: number;
   baseItemCount: number;
-  /** Google Programmable Search Engine ID (cx) for the "See real images"
-   *  widget. Public by design, so it's synced to all players. Empty = off. */
-  imageSearchCx: string;
 }
 
 export type AuctionPhase = 'opening' | 'raising';

@@ -1,55 +1,22 @@
-import { useState } from 'react';
 import type { Item } from '../types';
-import { GoogleImageWidget } from './GoogleImageWidget';
 
 /**
- * "See real images" button. When a Google Search Engine ID (cx) is configured,
- * shows a button that opens a modal with a live Google image search for the
- * exact item — so players can see the real thing when the auto-image is off.
+ * "See images" — opens a real Google Images search for the exact item in a new
+ * tab. No API key, no widget, no setup; works everywhere. The inline auto-image
+ * (iTunes/Wikipedia/Pexels/Openverse) stays as the at-a-glance picture; this is
+ * the reliable way to see the exact thing before bidding.
  */
-export function ItemImageSearch({ item, cx }: { item: Item; cx: string }) {
-  const [open, setOpen] = useState(false);
-  if (!cx) return null;
-
+export function ItemImageSearch({ item }: { item: Item }) {
+  const query = encodeURIComponent(item.name);
+  const url = `https://www.google.com/search?tbm=isch&q=${query}`;
   return (
-    <>
-      <button className="btn btn-ghost btn-sm" onClick={() => setOpen(true)}>
-        🔍 See real images
-      </button>
-
-      {open && (
-        <div className="modal-overlay" onClick={() => setOpen(false)}>
-          <div
-            className="modal-card"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="row spread" style={{ marginBottom: 10 }}>
-              <div className="stack" style={{ gap: 0, minWidth: 0 }}>
-                <span className="brand-sub">Real images</span>
-                <span
-                  style={{
-                    fontWeight: 800,
-                    overflow: 'hidden',
-                    textOverflow: 'ellipsis',
-                    whiteSpace: 'nowrap',
-                  }}
-                >
-                  {item.name}
-                </span>
-              </div>
-              <button className="btn btn-ghost btn-sm" onClick={() => setOpen(false)}>
-                ✕ Close
-              </button>
-            </div>
-            <div className="gcse-scroll">
-              <GoogleImageWidget cx={cx} query={item.name} />
-            </div>
-            <span className="faint tiny" style={{ marginTop: 8 }}>
-              Live Google Images results — powered by your Programmable Search.
-            </span>
-          </div>
-        </div>
-      )}
-    </>
+    <a
+      className="btn btn-ghost btn-sm"
+      href={url}
+      target="_blank"
+      rel="noopener noreferrer"
+    >
+      🔍 See images
+    </a>
   );
 }
