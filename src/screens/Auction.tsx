@@ -91,7 +91,10 @@ export function Auction({
             <div className="item-name">{item.name}</div>
             <div className="item-desc">{item.description}</div>
             <div className="row" style={{ marginTop: 12, gap: 8, justifyContent: 'center', flexWrap: 'wrap' }}>
-              <ItemImageSearch item={item} />
+              <ItemImageSearch
+                item={item}
+                context={isAnniversaryCode(state.topic) ? '' : state.topic}
+              />
               <ItemMessage item={item} />
             </div>
           </div>

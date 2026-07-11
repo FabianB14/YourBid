@@ -92,58 +92,112 @@ async function fromOpenverse(query: string): Promise<string | null> {
   return first?.thumbnail || first?.url || null;
 }
 
+export function looksLikeAnime(text: string): boolean {
+  return /\b(anime|manga|naruto|dragon ?ball|one piece|pok[eé]mon|studio ghibli|shonen|shounen|cartoon|animated (series|character))\b/i.test(
+    text
+  );
+}
+
+/** Jikan (MyAnimeList) — real anime character art, keyless & CORS-enabled. */
+async function fromJikanCharacters(name: string, limit: number): Promise<string[]> {
+  const url = `https://api.jikan.moe/v4/characters?q=${encodeURIComponent(
+    name
+  )}&order_by=favorites&sort=desc&limit=${limit}`;
+  const data = await fetchJson(url);
+  return (data?.data || [])
+    .map((c: any) => c?.images?.webp?.image_url || c?.images?.jpg?.image_url)
+    .filter(Boolean);
+}
+
+/** Wikipedia page thumbnails via fuzzy search (multiple results). */
+async function fromWikipediaMany(query: string, limit: number): Promise<string[]> {
+  const url =
+    'https://en.wikipedia.org/w/api.php?action=query&format=json&origin=*' +
+    `&generator=search&gsrlimit=${limit}&prop=pageimages&piprop=thumbnail&pithumbsize=500` +
+    `&gsrsearch=${encodeURIComponent(query)}`;
+  const data = await fetchJson(url);
+  const pages = data?.query?.pages || {};
+  return Object.values(pages)
+    .map((p: any) => p?.thumbnail?.source)
+    .filter(Boolean);
+}
+
+async function fromPexelsMany(query: string, key: string, limit: number): Promise<string[]> {
+  const url = `https://api.pexels.com/v1/search?query=${encodeURIComponent(
+    query
+  )}&per_page=${limit}`;
+  const data = await fetchJson(url, { headers: { Authorization: key } });
+  return (data?.photos || [])
+    .map((p: any) => p?.src?.large || p?.src?.medium)
+    .filter(Boolean);
+}
+
+async function fromOpenverseMany(query: string, limit: number): Promise<string[]> {
+  const url =
+    'https://api.openverse.org/v1/images/' +
+    `?q=${encodeURIComponent(query)}&page_size=${limit}`;
+  const data = await fetchJson(url, { headers: { Accept: 'application/json' } });
+  return (data?.results || []).map((r: any) => r?.thumbnail || r?.url).filter(Boolean);
+}
+
 /**
- * Return several candidate image URLs for a query (for the in-page gallery).
- * Pexels first when a key is set, then keyless Openverse. Display-only, so no
- * CORS concerns for the <img> tags.
+ * Return several candidate image URLs for the in-page gallery, using the best
+ * sources for the content: real anime art (Jikan) when the topic is anime,
+ * Wikipedia for notable subjects, Pexels/Openverse for real-world photos.
  */
-export async function searchImages(
-  query: string,
-  pexelsKey = '',
-  limit = 9
-): Promise<string[]> {
+export async function searchImages(opts: {
+  name: string;
+  query: string;
+  pexelsKey?: string;
+  anime?: boolean;
+  limit?: number;
+}): Promise<string[]> {
+  const { name, query, pexelsKey = '', anime = false, limit = 9 } = opts;
   const out: string[] = [];
   const add = (u?: string | null) => {
-    if (u && !out.includes(u)) out.push(u);
+    if (u && !out.includes(u) && out.length < limit) out.push(u);
   };
 
-  if (pexelsKey) {
+  const sources: Array<() => Promise<string[]>> = [];
+  // Anime characters first when the topic looks like anime — the real art.
+  if (anime) sources.push(() => fromJikanCharacters(name, limit));
+  if (pexelsKey) sources.push(() => fromPexelsMany(query, pexelsKey, limit));
+  sources.push(() => fromWikipediaMany(query, 4));
+  sources.push(() => fromOpenverseMany(query, limit));
+
+  for (const src of sources) {
+    if (out.length >= limit) break;
     try {
-      const url = `https://api.pexels.com/v1/search?query=${encodeURIComponent(
-        query
-      )}&per_page=${limit}`;
-      const data = await fetchJson(url, { headers: { Authorization: pexelsKey } });
-      for (const ph of data?.photos || []) add(ph?.src?.large || ph?.src?.medium);
+      (await src()).forEach(add);
     } catch {
-      /* ignore */
+      /* try next */
     }
   }
-
-  if (out.length < limit) {
-    try {
-      const url =
-        'https://api.openverse.org/v1/images/' +
-        `?q=${encodeURIComponent(query)}&page_size=${limit}`;
-      const data = await fetchJson(url, { headers: { Accept: 'application/json' } });
-      for (const r of data?.results || []) add(r?.thumbnail || r?.url);
-    } catch {
-      /* ignore */
-    }
-  }
-
   return out.slice(0, limit);
 }
 
-/** Resolve one item's image, trying the most likely sources in order. */
+/** Resolve one item's image, trying the most likely sources in order.
+ *  `context` (usually the topic) is appended to stock-library queries so an
+ *  item like "Sasuke Uchiha" is searched as "Sasuke Uchiha Naruto anime". */
 export async function resolveItemImage(
   item: Item,
-  pexelsKey = ''
+  pexelsKey = '',
+  context = ''
 ): Promise<string | null> {
   const kind = classify(item);
   const name = item.name;
+  const anime = looksLikeAnime(`${context} ${item.category} ${name}`);
+  // Contextual query for stock libraries; keep the plain name for exact-match
+  // sources (iTunes/Wikipedia do better without extra words).
+  const ctxQuery = [name, context].filter(Boolean).join(' ').trim();
   const tries: Array<() => Promise<string | null>> = [];
 
-  // Exact-match sources first (accurate cover/poster art & article images).
+  // Real anime art first when the topic looks like anime.
+  if (anime) {
+    tries.push(async () => (await fromJikanCharacters(name, 1))[0] || null);
+  }
+
+  // Exact-match sources (accurate cover/poster art & article images).
   if (kind === 'music') {
     tries.push(() => fromItunes(name, 'music'));
     tries.push(() => fromWikipedia(`${name} song`));
@@ -154,16 +208,15 @@ export async function resolveItemImage(
     tries.push(() => fromWikipedia(name));
   }
 
-  // Pexels (if a key is set) is the reliable catch-all — a real photo for
-  // almost anything (places, houses, foods, products…).
+  // Pexels (if a key is set) — a real photo for almost anything.
   if (pexelsKey) {
+    tries.push(() => fromPexels(ctxQuery, pexelsKey));
     tries.push(() => fromPexels(`${name} ${item.category}`.trim(), pexelsKey));
-    tries.push(() => fromPexels(name, pexelsKey));
   }
 
   // Keyless catch-alls, last.
+  tries.push(() => fromOpenverse(ctxQuery));
   tries.push(() => fromOpenverse(name));
-  tries.push(() => fromOpenverse(`${name} ${item.category}`.trim()));
 
   for (const attempt of tries) {
     try {
@@ -184,13 +237,14 @@ export async function resolveItemImage(
  */
 export async function enrichItemsWithImages(
   items: Item[],
+  context = '',
   perItemBudgetMs = 7000
 ): Promise<Item[]> {
   const { pexelsKey } = loadImageConfig();
   const urls = await Promise.all(
     items.map((it) =>
       Promise.race<string | null>([
-        resolveItemImage(it, pexelsKey).catch(() => null),
+        resolveItemImage(it, pexelsKey, context).catch(() => null),
         new Promise<null>((r) => setTimeout(() => r(null), perItemBudgetMs)),
       ])
     )

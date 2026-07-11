@@ -1,25 +1,40 @@
 import { useState } from 'react';
 import type { Item } from '../types';
-import { searchImages } from '../services/images';
+import { searchImages, looksLikeAnime } from '../services/images';
 import { loadImageConfig } from '../services/imageConfig';
 
 /**
- * "See images" — opens an in-page gallery of real photos for the item (Pexels
- * if a key is set, plus keyless Openverse). Stays on the page; includes an
- * "Open in Google Images" link as an exact-match fallback.
+ * "See images" — opens an in-page gallery of real images for the item, using
+ * the topic as context and the best source for the content (anime art, Wikipedia,
+ * Pexels, Openverse). A prominent "Open in Google Images" button covers exact
+ * matches that free libraries can't hold (copyrighted art, specific products).
  */
-export function ItemImageSearch({ item }: { item: Item }) {
+export function ItemImageSearch({
+  item,
+  context = '',
+}: {
+  item: Item;
+  context?: string;
+}) {
   const [open, setOpen] = useState(false);
   const [urls, setUrls] = useState<string[] | null>(null); // null = loading
 
+  const query = [item.name, context].filter(Boolean).join(' ').trim();
+  const anime = looksLikeAnime(`${context} ${item.category} ${item.name}`);
   const googleUrl = `https://www.google.com/search?tbm=isch&q=${encodeURIComponent(
-    item.name
+    query
   )}`;
 
   const openGallery = () => {
     setOpen(true);
     setUrls(null);
-    searchImages(item.name, loadImageConfig().pexelsKey, 9)
+    searchImages({
+      name: item.name,
+      query,
+      pexelsKey: loadImageConfig().pexelsKey,
+      anime,
+      limit: 9,
+    })
       .then(setUrls)
       .catch(() => setUrls([]));
   };
@@ -55,6 +70,16 @@ export function ItemImageSearch({ item }: { item: Item }) {
               </button>
             </div>
 
+            <a
+              href={googleUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="btn btn-accent btn-sm btn-block"
+              style={{ marginBottom: 10 }}
+            >
+              🔎 Open exact results in Google Images ↗
+            </a>
+
             <div style={{ overflowY: 'auto', flex: 1 }}>
               {urls === null && (
                 <div className="stack center" style={{ padding: 24, gap: 12 }}>
@@ -63,10 +88,11 @@ export function ItemImageSearch({ item }: { item: Item }) {
                 </div>
               )}
               {urls !== null && urls.length === 0 && (
-                <div className="stack center" style={{ padding: 24, gap: 8 }}>
+                <div className="stack center" style={{ padding: 20, gap: 8 }}>
                   <div style={{ fontSize: 40 }}>🖼️</div>
                   <span className="faint tiny" style={{ textAlign: 'center' }}>
-                    No inline images found — try “Open in Google Images” below.
+                    No inline images found — use Google Images above for the
+                    exact match.
                   </span>
                 </div>
               )}
@@ -86,16 +112,6 @@ export function ItemImageSearch({ item }: { item: Item }) {
                 </div>
               )}
             </div>
-
-            <a
-              href={googleUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="faint tiny"
-              style={{ marginTop: 10, textAlign: 'center' }}
-            >
-              Not the right one? Open in Google Images ↗
-            </a>
           </div>
         </div>
       )}

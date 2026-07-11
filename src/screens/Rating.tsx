@@ -81,7 +81,7 @@ export function Rating({
         <div className="item-name">{current.item.name}</div>
         <div className="item-desc">{current.item.description}</div>
         <div className="row" style={{ marginTop: 12, gap: 8, justifyContent: 'center', flexWrap: 'wrap' }}>
-          <ItemImageSearch item={current.item} />
+          <ItemImageSearch item={current.item} context={state.topic} />
           <ItemMessage item={current.item} />
         </div>
         <div className="faint tiny" style={{ marginTop: 12 }}>
