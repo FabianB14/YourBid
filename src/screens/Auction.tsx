@@ -67,7 +67,7 @@ export function Auction({
           className="info-banner"
           style={{ textAlign: 'center', borderColor: 'var(--accent-2)', color: '#ffd0e0' }}
         >
-          ❤️ Happy anniversary, {WIFE_NAME} — every item here is really just “I love you.” ❤️
+          ❤️ Remember I love you, {WIFE_NAME} — every item here is really just “I love you.” ❤️
         </div>
       )}
       <div className="row spread" style={{ gap: 8 }}>
