@@ -92,6 +92,48 @@ async function fromOpenverse(query: string): Promise<string | null> {
   return first?.thumbnail || first?.url || null;
 }
 
+/**
+ * Return several candidate image URLs for a query (for the in-page gallery).
+ * Pexels first when a key is set, then keyless Openverse. Display-only, so no
+ * CORS concerns for the <img> tags.
+ */
+export async function searchImages(
+  query: string,
+  pexelsKey = '',
+  limit = 9
+): Promise<string[]> {
+  const out: string[] = [];
+  const add = (u?: string | null) => {
+    if (u && !out.includes(u)) out.push(u);
+  };
+
+  if (pexelsKey) {
+    try {
+      const url = `https://api.pexels.com/v1/search?query=${encodeURIComponent(
+        query
+      )}&per_page=${limit}`;
+      const data = await fetchJson(url, { headers: { Authorization: pexelsKey } });
+      for (const ph of data?.photos || []) add(ph?.src?.large || ph?.src?.medium);
+    } catch {
+      /* ignore */
+    }
+  }
+
+  if (out.length < limit) {
+    try {
+      const url =
+        'https://api.openverse.org/v1/images/' +
+        `?q=${encodeURIComponent(query)}&page_size=${limit}`;
+      const data = await fetchJson(url, { headers: { Accept: 'application/json' } });
+      for (const r of data?.results || []) add(r?.thumbnail || r?.url);
+    } catch {
+      /* ignore */
+    }
+  }
+
+  return out.slice(0, limit);
+}
+
 /** Resolve one item's image, trying the most likely sources in order. */
 export async function resolveItemImage(
   item: Item,
