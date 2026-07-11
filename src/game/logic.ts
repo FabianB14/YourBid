@@ -23,6 +23,21 @@ export function computeTotalItems(
   return Math.max(baseItemCount, capacity);
 }
 
+/**
+ * The minimum number of real items needed for a playable game. Used only to
+ * decide whether to show the "topic too narrow" message. This is a lenient
+ * floor — we happily play with fewer items than a full roster (rosters just
+ * won't all fill); we only warn when a topic yields too few to be fun.
+ */
+export function minPlayableItems(
+  playerCount: number,
+  settings: Settings
+): number {
+  const capacity = playerCount * settings.slotsPerPlayer;
+  const cap = computeTotalItems(playerCount, settings);
+  return Math.min(cap, Math.max(6, Math.ceil(capacity * 0.5)));
+}
+
 /** Number of slots a player has filled = number of items they've won. */
 export function slotsFilled(player: Player): number {
   return player.wonItems.length;
