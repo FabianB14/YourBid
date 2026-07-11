@@ -8,7 +8,9 @@ import { TimerBar } from '../components/TimerBar';
 import { PlayerSidebar } from '../components/PlayerSidebar';
 import { ItemImage } from '../components/ItemImage';
 import { ItemImageSearch } from '../components/ItemImageSearch';
+import { ItemMessage } from '../components/ItemMessage';
 import { GameControls } from '../components/GameControls';
+import { isAnniversaryCode, WIFE_NAME } from '../secret/anniversary';
 import { Avatar, Bids } from '../components/ui';
 import { clamp } from '../utils/misc';
 
@@ -60,6 +62,14 @@ export function Auction({
   return (
     <div className="screen" style={{ gap: 16 }}>
       <GameControls controller={controller} state={state} />
+      {isAnniversaryCode(state.topic) && (
+        <div
+          className="info-banner"
+          style={{ textAlign: 'center', borderColor: 'var(--accent-2)', color: '#ffd0e0' }}
+        >
+          ❤️ Happy anniversary, {WIFE_NAME} — every item here is really just “I love you.” ❤️
+        </div>
+      )}
       <div className="row spread" style={{ gap: 8 }}>
         <span className="brand-sub" style={{ flex: '0 0 auto' }}>
           Item {Math.min(state.currentItemIndex + 1, state.totalItems)} /{' '}
@@ -80,8 +90,9 @@ export function Auction({
             </span>
             <div className="item-name">{item.name}</div>
             <div className="item-desc">{item.description}</div>
-            <div style={{ marginTop: 12 }}>
+            <div className="row" style={{ marginTop: 12, gap: 8, justifyContent: 'center', flexWrap: 'wrap' }}>
               <ItemImageSearch item={item} />
+              <ItemMessage item={item} />
             </div>
           </div>
 

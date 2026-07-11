@@ -4,6 +4,7 @@ import type { GameState, WonItem } from '../types';
 import { RATING_MAX, RATING_MIN } from '../config/gameConfig';
 import { ItemImage } from '../components/ItemImage';
 import { ItemImageSearch } from '../components/ItemImageSearch';
+import { ItemMessage } from '../components/ItemMessage';
 import { GameControls } from '../components/GameControls';
 
 export function Rating({
@@ -79,8 +80,9 @@ export function Rating({
         </span>
         <div className="item-name">{current.item.name}</div>
         <div className="item-desc">{current.item.description}</div>
-        <div style={{ marginTop: 12 }}>
+        <div className="row" style={{ marginTop: 12, gap: 8, justifyContent: 'center', flexWrap: 'wrap' }}>
           <ItemImageSearch item={current.item} />
+          <ItemMessage item={current.item} />
         </div>
         <div className="faint tiny" style={{ marginTop: 12 }}>
           Won by {current.ownerName} · How good is this item?

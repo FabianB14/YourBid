@@ -21,6 +21,7 @@ import {
 import { generateWithGemini } from './generators/gemini';
 import { generateWithAnthropic } from './generators/anthropic';
 import { enrichItemsWithImages } from './images';
+import { isAnniversaryCode, anniversaryItems } from '../secret/anniversary';
 
 export interface GenerationResult {
   items: Item[];
@@ -55,6 +56,12 @@ export async function generateItems(
   count: number,
   config: AiConfig = loadAiConfig()
 ): Promise<GenerationResult> {
+  // 0. 💛 Hidden anniversary auction — unlocked by entering the date as the
+  //    topic. Skips generation entirely; works with no key.
+  if (isAnniversaryCode(topic)) {
+    return pack(anniversaryItems(), count, 'offline');
+  }
+
   // 1. Direct provider call using the host's own key.
   if (isAiReady(config)) {
     const model = effectiveModel(config);
