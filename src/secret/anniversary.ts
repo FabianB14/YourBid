@@ -79,7 +79,7 @@ export const LOVE_POEM_LINES: Array<[year: string, line: string]> = [
 
 function poemText(): string {
   const body = LOVE_POEM_LINES.map(([y, line]) => `${y} — ${line}`).join('\n');
-  return `${LOVE_POEM_TITLE}\n\nFor ${WIFE_NAME},\n\n${body}\n\nHappy anniversary. Every year, I love you more.`;
+  return `${LOVE_POEM_TITLE}\n\nFor ${WIFE_NAME},\n\n${body}\n\nRemember — every year, I love you more.`;
 }
 
 /**
