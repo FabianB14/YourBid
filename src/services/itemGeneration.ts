@@ -45,9 +45,10 @@ function withIds(items: Array<Omit<Item, 'id'>>): Item[] {
 async function pack(
   raw: Array<Omit<Item, 'id'>>,
   count: number,
-  source: GenerationResult['source']
+  source: GenerationResult['source'],
+  context = ''
 ): Promise<GenerationResult> {
-  const items = await enrichItemsWithImages(withIds(raw));
+  const items = await enrichItemsWithImages(withIds(raw), context);
   return { items, requested: count, found: items.length, source };
 }
 
@@ -69,7 +70,7 @@ export async function generateItems(
       config.provider === 'gemini'
         ? await generateWithGemini(topic, count, config.apiKey, model)
         : await generateWithAnthropic(topic, count, config.apiKey, model);
-    return pack(raw, count, config.provider === 'gemini' ? 'gemini' : 'anthropic');
+    return pack(raw, count, config.provider === 'gemini' ? 'gemini' : 'anthropic', topic);
   }
 
   // 2. Serverless function (keeps the key server-side, e.g. on Vercel).
@@ -84,13 +85,13 @@ export async function generateItems(
       throw new Error(body.error || `Request failed (${res.status})`);
     }
     const data = (await res.json()) as { items: Array<Omit<Item, 'id'>> };
-    return pack(data.items, count, 'server');
+    return pack(data.items, count, 'server', topic);
   } catch (err) {
     // 3. Offline fallback pack.
     console.warn(
       '[YourBid] No provider key set and /api unavailable — using offline sample pack.',
       err
     );
-    return pack(sampleItemsForTopic(topic), count, 'offline');
+    return pack(sampleItemsForTopic(topic), count, 'offline', topic);
   }
 }
