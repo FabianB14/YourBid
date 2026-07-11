@@ -35,7 +35,7 @@ import {
   type Action,
 } from '../game/reducer';
 import { generateItems } from '../services/itemGeneration';
-import { computeTotalItems } from '../game/logic';
+import { computeTotalItems, minPlayableItems } from '../game/logic';
 import { getDb } from '../firebase';
 import { makeRoomCode, makeId } from '../utils/misc';
 import { DEFAULT_SETTINGS, MAX_PLAYERS } from '../config/gameConfig';
@@ -303,17 +303,18 @@ export class FirebaseController implements GameController {
     });
     const { playerOrder, settings, topic } = this.state;
     const target = computeTotalItems(playerOrder.length, settings);
+    const floor = minPlayableItems(playerOrder.length, settings);
     try {
       const result = await generateItems(topic, Math.ceil(target * 1.5));
       // The offline sample pack is a fallback; play with whatever it has rather
-      // than hard-failing. Only real generators gate on the target count.
-      if (result.source !== 'offline' && result.found < target) {
+      // than hard-failing. Real generators only warn below the playable floor.
+      if (result.source !== 'offline' && result.found < floor) {
         this.applyAsHost({
           type: 'SET_GENERATION',
           generation: {
             status: 'error',
             found: result.found,
-            requested: target,
+            requested: floor,
             message: `Only found ${result.found} real items for "${topic}". Try broadening your topic.`,
           },
         });

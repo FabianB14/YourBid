@@ -12,7 +12,7 @@ import {
   botRating,
 } from '../game/bots';
 import { generateItems } from '../services/itemGeneration';
-import { computeTotalItems } from '../game/logic';
+import { computeTotalItems, minPlayableItems } from '../game/logic';
 import { makeRoomCode, makeId } from '../utils/misc';
 import { DEFAULT_SETTINGS } from '../config/gameConfig';
 
@@ -101,17 +101,18 @@ export class PracticeController implements GameController {
   async startGame(): Promise<void> {
     this.apply({ type: 'SET_GENERATION', generation: { status: 'loading' } });
     const target = this.itemTarget();
+    const floor = minPlayableItems(this.state.playerOrder.length, this.state.settings);
     try {
       const result = await generateItems(this.state.topic, Math.ceil(target * 1.5));
       // The offline sample pack is a fallback; play with whatever it has rather
-      // than hard-failing. Only real generators gate on the target count.
-      if (result.source !== 'offline' && result.found < target) {
+      // than hard-failing. Real generators only warn below the playable floor.
+      if (result.source !== 'offline' && result.found < floor) {
         this.apply({
           type: 'SET_GENERATION',
           generation: {
             status: 'error',
             found: result.found,
-            requested: target,
+            requested: floor,
             message: `Only found ${result.found} real items for "${this.state.topic}". Try broadening your topic.`,
           },
         });
