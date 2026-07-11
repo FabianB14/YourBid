@@ -12,7 +12,7 @@
 import type { Item } from '../types';
 
 // EDIT ME — your wife's name (or a pet name). Shown in the secret banner/poem.
-export const WIFE_NAME = 'my love';
+export const WIFE_NAME = 'beautiful';
 
 // The anniversary the secret code unlocks.
 const ANNIV = { year: 2016, month: 12, day: 31 };
