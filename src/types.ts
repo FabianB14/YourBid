@@ -13,6 +13,9 @@ export interface Item {
   /** Best-effort real image (movie poster, album/song art, product photo).
    *  Resolved at generation time from free, keyless sources; may be absent. */
   imageUrl?: string;
+  /** Optional long-form note shown behind a "💌 Read" button (used by the
+   *  hidden anniversary auction for the love poem). */
+  message?: string;
 }
 
 /** An item after it has been won, including who paid what and its ratings. */

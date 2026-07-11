@@ -12,6 +12,7 @@ function placeholderGlyph(category: string): string {
   if (/place|landmark|city|country/.test(c)) return '🗺️';
   if (/game/.test(c)) return '🎮';
   if (/art/.test(c)) return '🎨';
+  if (/poem|love|us|our /.test(c)) return '❤️';
   return '🏷️';
 }
 
