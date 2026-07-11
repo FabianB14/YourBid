@@ -12,21 +12,44 @@ export function Generating({
   const gen = state.generation;
 
   if (gen.status === 'error') {
+    // A "too narrow" error carries a found count; anything else (bad API key,
+    // network, etc.) is a generation failure and gets a different message.
+    const tooNarrow = gen.found != null;
+    const looksLikeKey = /api key|invalid|401|403|400|permission|unauthor/i.test(
+      gen.message || ''
+    );
     return (
       <div className="screen center" style={{ gap: 20 }}>
         <div className="card stack center" style={{ maxWidth: 440 }}>
-          <div style={{ fontSize: 48 }}>🔍</div>
-          <h2>Topic a little too narrow</h2>
+          <div style={{ fontSize: 48 }}>{tooNarrow ? '🔍' : '⚠️'}</div>
+          <h2>{tooNarrow ? 'Topic a little too narrow' : 'Couldn’t generate items'}</h2>
           <p className="muted" style={{ margin: 0 }}>
             {gen.message ||
               'Not enough real items matched all the constraints.'}
           </p>
-          {gen.found != null && gen.requested != null && (
+          {tooNarrow && gen.requested != null && (
             <div className="info-banner">
               Found <strong>{gen.found}</strong> real{' '}
-              {gen.found === 1 ? 'item' : 'items'}, needed{' '}
+              {gen.found === 1 ? 'item' : 'items'}, needed at least{' '}
               <strong>{gen.requested}</strong>. Try broadening the topic — widen a
               date range, drop a price cap, or be less specific.
+            </div>
+          )}
+          {!tooNarrow && looksLikeKey && (
+            <div className="info-banner" style={{ textAlign: 'left' }}>
+              This usually means the API key is wrong. In the lobby’s Item
+              Generation panel, make sure you pasted the actual key:
+              <ul style={{ margin: '8px 0 0', paddingLeft: 18 }}>
+                <li>
+                  <strong>Gemini</strong> keys start with <code>AIza…</code> (from
+                  aistudio.google.com/apikey) — not the project ID like{' '}
+                  <code>gen-lang-client-…</code>.
+                </li>
+                <li>
+                  <strong>Claude</strong> keys start with <code>sk-ant-…</code>.
+                </li>
+                <li>Or switch the provider to “Offline demo” to play now.</li>
+              </ul>
             </div>
           )}
           {isHost ? (
