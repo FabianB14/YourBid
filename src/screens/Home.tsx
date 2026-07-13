@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useGame } from '../store/GameContext';
 import { isFirebaseConfigured } from '../firebase';
 import { CURRENCY } from '../config/currency';
+import { HowToPlay } from '../components/HowToPlay';
 
 type Panel = 'menu' | 'create' | 'join';
 
@@ -66,6 +67,7 @@ export function Home() {
             >
               🤖 Practice vs 2 Bots
             </button>
+            <HowToPlay block />
             <p className="faint tiny" style={{ margin: 0, textAlign: 'center' }}>
               Practice mode runs fully offline — no setup needed. Bid{' '}
               {CURRENCY.icon} {CURRENCY.label} on real items and try the whole loop.

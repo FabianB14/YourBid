@@ -6,6 +6,7 @@ import { Avatar, Bids } from '../components/ui';
 import { AiKeyPanel } from '../components/AiKeyPanel';
 import { ImageKeyPanel } from '../components/ImageKeyPanel';
 import { SoundToggle } from '../components/GameControls';
+import { HowToPlay } from '../components/HowToPlay';
 import { computeTotalItems } from '../game/logic';
 import {
   BASE_ITEM_RANGE,
@@ -116,6 +117,7 @@ export function Lobby({
           )}
         </div>
         <div className="row" style={{ gap: 8 }}>
+          <HowToPlay />
           <SoundToggle />
           <button className="btn btn-danger btn-sm" onClick={leave}>
             Leave
